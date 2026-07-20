@@ -15,13 +15,7 @@ const API_BASE_URL = 'https://test-stage.crik.ai';
  */
 export async function verifySession(token) {
     try {
-        const headers = { 
-            'Content-Type': 'application/json',
-            // 'ngrok-skip-browser-warning': 'true'
-        };
-        if (token && token !== 'cookie-session') {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        const headers = { 'Content-Type': 'application/json' };
 
         const response = await fetch(`${API_BASE_URL}/api/users/me`, {
             method: 'GET',
@@ -59,6 +53,7 @@ export async function signOut(token) {
         console.warn('[authService] signOut error (ignored):', err);
     }
 }
+
 export const createDashboardOrder = async (token, { userId, amount, tokenCount }) => {
   const response = await fetch(`${API_BASE_URL}/api/payments/dashboard-order`, {
     method: "POST",
@@ -80,7 +75,7 @@ export const createDashboardOrder = async (token, { userId, amount, tokenCount }
 
 export async function getBroadcasters() {
     try {
-        const headers = { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' };
+        const headers = { 'Content-Type': 'application/json' };
         const response = await fetch(`${API_BASE_URL}/api/users/broadcasters`, {
             method: 'GET',
             headers,
@@ -234,13 +229,7 @@ export function googleSignIn(role) {
  */
 async function fetchUserProfile(token) {
     try {
-        const headers = { 
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-        };
-        if (token && token !== 'cookie-session') {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        const headers = { 'Content-Type': 'application/json' };
 
         const response = await fetch(`${API_BASE_URL}/api/users/me`, {
             method: 'GET',
