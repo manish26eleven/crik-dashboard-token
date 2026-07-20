@@ -5,8 +5,9 @@
  * Uses direct fetch calls and redirect-based Google OAuth.
  */
 
-// const API_BASE_URL = 'https://grisly-blowzy-julio.ngrok-free.dev';
-const API_BASE_URL = 'https://test-stage.crik.ai';
+// In development, we use Vite's dev server proxy to avoid CORS issues.
+// VITE_API_BASE_URL can be set in production environment variables.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 /**
  * Verify an existing session token or cookie session against the backend.
