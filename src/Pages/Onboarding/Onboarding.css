@@ -1,0 +1,92 @@
+/* Full-screen background with animated orbs */
+.onboarding-bg {
+  position: fixed;
+  inset: 0;
+  background: #050508;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.onboarding-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orbFloat 12s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 70%);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12), transparent 70%);
+  bottom: -150px;
+  right: -150px;
+  animation-delay: -4s;
+}
+
+.orb-3 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.08), transparent 70%);
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: -8s;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  33% { transform: translateY(-30px) scale(1.05); }
+  66% { transform: translateY(20px) scale(0.95); }
+}
+
+/* Container */
+.onboarding-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Splash layer */
+.splash-layer {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.5s ease-in-out;
+  opacity: 1;
+  z-index: 2;
+}
+
+.splash-layer.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Login layer */
+.login-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease-in-out;
+  opacity: 0;
+  z-index: 1;
+  padding: 24px;
+}
+
+.login-layer.fade-in {
+  opacity: 1;
+}
+
+.login-layer.fade-out {
+  opacity: 0;
+}
