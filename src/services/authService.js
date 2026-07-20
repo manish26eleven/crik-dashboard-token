@@ -5,9 +5,8 @@
  * Uses direct fetch calls and redirect-based Google OAuth.
  */
 
-// In development, we use Vite's dev server proxy to avoid CORS issues.
-// VITE_API_BASE_URL can be set in production environment variables.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// const API_BASE_URL = 'https://grisly-blowzy-julio.ngrok-free.dev';
+const API_BASE_URL = 'https://test-stage.crik.ai';
 
 /**
  * Verify an existing session token or cookie session against the backend.
@@ -16,9 +15,13 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
  */
 export async function verifySession(token) {
     try {
-        const headers = { 'Content-Type': 'application/json' , 
+        const headers = { 
+            'Content-Type': 'application/json',
             // 'ngrok-skip-browser-warning': 'true'
-         };
+        };
+        if (token && token !== 'cookie-session') {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
 
         const response = await fetch(`${API_BASE_URL}/api/users/me`, {
             method: 'GET',
@@ -231,9 +234,14 @@ export function googleSignIn(role) {
  */
 async function fetchUserProfile(token) {
     try {
-        const headers = { 'Content-Type': 'application/json',
+        const headers = { 
+            'Content-Type': 'application/json',
             'ngrok-skip-browser-warning': 'true'
-         };
+        };
+        if (token && token !== 'cookie-session') {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/users/me`, {
             method: 'GET',
             headers,
