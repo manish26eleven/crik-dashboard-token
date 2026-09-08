@@ -6,8 +6,8 @@
  */
 
 // const API_BASE_URL = 'https://grisly-blowzy-julio.ngrok-free.dev';
-const API_BASE_URL = 'https://test-stage.crik.ai';
-
+// const API_BASE_URL = 'https://test-stage.crik.ai';
+const API_BASE_URL = 'https://stage-api.crik.ai';
 /**
  * Verify an existing session token or cookie session against the backend.
  * @param {string} token  The session token stored in localStorage (often 'cookie-session' for cookie auth).
