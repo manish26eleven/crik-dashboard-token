@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setUser, setSession, logout } from "./store/authSlice";
 import { verifySession, signOut } from "./services/authService";
 import Onboarding from "./Pages/Onboarding/Onboarding";
@@ -9,6 +9,7 @@ import Dashboard from "./Pages/Dashboard/Dashboard";
 function App() {
   const dispatch = useDispatch();
   const hasRunBoot = useRef(false);
+  const selectedApp = useSelector((state) => state.auth.selectedApp ?? 'crik');
 
   useEffect(() => {
     if (hasRunBoot.current) return;
@@ -18,8 +19,8 @@ function App() {
       const token = localStorage.getItem("session-token");
       if (!token) return;
 
-      console.log("🔄 [App Boot] Verifying existing session…");
-      const result = await verifySession(token);
+      console.log("🔄 [App Boot] Verifying existing session… (app:", selectedApp, ")");
+      const result = await verifySession(token, selectedApp);
 
       if (result.success && result.user) {
         console.log("✅ [App Boot] Auto-login SUCCESS");
@@ -34,13 +35,13 @@ function App() {
         console.warn("❌ [App Boot] Session invalid — clearing");
         localStorage.removeItem("session-token");
         localStorage.removeItem("userData");
-        await signOut(token);
+        await signOut(token, selectedApp);
         dispatch(logout());
       }
     };
 
     runBootCheck();
-  }, [dispatch]);
+  }, [dispatch, selectedApp]);
 
   return (
     <Routes>
@@ -53,3 +54,4 @@ function App() {
 }
 
 export default App;
+

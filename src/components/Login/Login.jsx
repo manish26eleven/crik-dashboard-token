@@ -5,12 +5,13 @@ import googleImg from '../../assets/google.svg';
 /**
  * Login card component.
  * Props:
- *   onSignIn  — called when user clicks the "Sign in with Google" button.
- *   isLoading — shows a spinner while auth is in progress.
- *   error     — error message to display if auth fails.
+ *   selectedApp  — 'crik' | 'association'
+ *   onAppChange  — called with the new app key when toggle is clicked
+ *   onSignIn     — called when user clicks "Sign in with Google"
+ *   isLoading    — shows a spinner while auth is in progress
+ *   error        — error message to display if auth fails
  */
-export default function Login({ onSignIn, isLoading = false, error = null }) {
-
+export default function Login({ selectedApp = 'crik', onAppChange, onSignIn, isLoading = false, error = null }) {
   return (
     <div className="login-card">
       <div className="logo-wrapper">
@@ -22,9 +23,28 @@ export default function Login({ onSignIn, isLoading = false, error = null }) {
       <div className="login-text">
         <h1 className="login-title">Welcome Back!</h1>
         <p className="login-subtext">
-          Log in with your Google account to access the Crik.ai admin
-          dashboard and manage your settings.
+          Select your app and sign in with Google to access the admin dashboard.
         </p>
+      </div>
+
+      {/* App selector */}
+      <div className="app-selector">
+        <button
+          className={`app-selector-btn ${selectedApp === 'crik' ? 'active' : ''}`}
+          onClick={() => onAppChange?.('crik')}
+          disabled={isLoading}
+          type="button"
+        >
+          Crik
+        </button>
+        <button
+          className={`app-selector-btn ${selectedApp === 'association' ? 'active' : ''}`}
+          onClick={() => onAppChange?.('association')}
+          disabled={isLoading}
+          type="button"
+        >
+          Association
+        </button>
       </div>
 
       {error && (

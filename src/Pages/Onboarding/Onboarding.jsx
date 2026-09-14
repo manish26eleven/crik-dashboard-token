@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setUser, setSession, logout } from "../../store/authSlice";
+import { setUser, setSession, setSelectedApp, logout } from "../../store/authSlice";
 import { googleSignIn, verifySession, signOut } from "../../services/authService";
 import Splash from "../../components/Splash/Splash";
 import Login from "../../components/Login/Login";
@@ -10,7 +10,7 @@ import "./Onboarding.css";
 /**
  * Onboarding page — orchestrates the full sign-in flow:
  *
- *   splash → login → (Google OAuth popup) → /dashboard
+ *   splash → login (app selector + Google OAuth popup) → /dashboard
  *
  * On boot it checks localStorage for an existing session token and
  * auto-logs the user in if valid, mirroring the Electron app's behavior.
@@ -21,10 +21,15 @@ export default function Onboarding() {
   const dispatch = useDispatch();
 
   const isAuthenticated = useSelector((state) => !!state.auth.sessionToken);
+  // Restore the last selected app from Redux (persisted via localStorage)
+  const storedApp = useSelector((state) => state.auth.selectedApp ?? 'crik');
 
   // Stage machine: 'splash' → 'login' → 'done'
   const initialStage = location.state?.stage || "splash";
   const [stage, setStage] = useState(initialStage);
+
+  // Which app the admin is signing into
+  const [selectedApp, setLocalSelectedApp] = useState(storedApp);
 
   // Splash animation flags
   const [fade, setFade] = useState(false);
@@ -64,8 +69,8 @@ export default function Onboarding() {
       const token = localStorage.getItem("session-token");
       if (!token) return; // no token → stay on login
 
-      console.log("🔄 [Boot] Found session-token, verifying…");
-      const result = await verifySession(token);
+      console.log("🔄 [Boot] Found session-token, verifying… (app:", storedApp, ")");
+      const result = await verifySession(token, storedApp);
 
       if (result.success && result.user) {
         console.log("✅ [Boot] Auto-login SUCCESS");
@@ -83,13 +88,13 @@ export default function Onboarding() {
         console.warn("❌ [Boot] Session invalid — cleaning up");
         localStorage.removeItem("session-token");
         localStorage.removeItem("userData");
-        await signOut(token);
+        await signOut(token, storedApp);
         dispatch(logout());
       }
     };
 
     runBootCheck();
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, storedApp]);
 
   /* ─── Stage transition after splash ────────────────── */
   useEffect(() => {
@@ -104,19 +109,27 @@ export default function Onboarding() {
     }
   }, [isSplashFinished, location.state?.stage, isAuthenticated, navigate]);
 
+  /* ─── App change handler ────────────────────────────── */
+  const handleAppChange = (app) => {
+    setLocalSelectedApp(app);
+    dispatch(setSelectedApp(app));
+    setAuthError(null); // clear any previous error when switching app
+  };
+
   /* ─── Google sign-in handler ────────────────────────── */
   const handleSignIn = async () => {
     setAuthError(null);
     setIsSigningIn(true);
 
     try {
-      // 'ADMIN' role — the admin dashboard doesn't need role selection
-      const result = await googleSignIn("ADMIN");
+      const result = await googleSignIn("ADMIN", selectedApp);
       console.log("Google Auth result:", result);
 
       if (result.success && result.sessionToken) {
-        // Persist token
+        // Persist token and app selection
         localStorage.setItem("session-token", result.sessionToken);
+        dispatch(setSelectedApp(selectedApp));
+
         if (result.user) {
           localStorage.setItem("userData", JSON.stringify(result.user));
           dispatch(setUser({
@@ -164,6 +177,8 @@ export default function Onboarding() {
         {stage === "login" && (
           <div className={`login-layer fade-in ${loginFading ? "fade-out" : ""}`}>
             <Login
+              selectedApp={selectedApp}
+              onAppChange={handleAppChange}
               onSignIn={handleSignIn}
               isLoading={isSigningIn}
               error={authError}

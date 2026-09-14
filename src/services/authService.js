@@ -3,21 +3,31 @@
  *
  * Handles all authentication API calls for the admin dashboard.
  * Uses direct fetch calls and redirect-based Google OAuth.
+ *
+ * Supports two apps, each with its own backend base URL:
+ *   - 'crik'        → https://test-stage.crik.ai
+ *   - 'association' → https://stage-api.crik.ai
  */
 
-// const API_BASE_URL = 'https://grisly-blowzy-julio.ngrok-free.dev';
-const API_BASE_URL = 'https://test-stage.crik.ai';
+const API_URLS = {
+    crik:        'https://test-stage.crik.ai',
+    association: 'https://stage-api.crik.ai',
+};
+
+function getBaseUrl(app = 'crik') {
+    return API_URLS[app] ?? API_URLS.crik;
+}
 
 /**
  * Verify an existing session token or cookie session against the backend.
- * @param {string} token  The session token stored in localStorage (often 'cookie-session' for cookie auth).
+ * @param {string} token  The session token stored in localStorage.
+ * @param {string} app    'crik' | 'association'
  * @returns {Promise<{success: boolean, user?: object, error?: string}>}
  */
-export async function verifySession(token) {
+export async function verifySession(token, app = 'crik') {
+    const API_BASE_URL = getBaseUrl(app);
     try {
-        const headers = { 'Content-Type': 'application/json' , 
-            // 'ngrok-skip-browser-warning': 'true'
-         };
+        const headers = { 'Content-Type': 'application/json' };
 
         const response = await fetch(`${API_BASE_URL}/api/users/me`, {
             method: 'GET',
@@ -42,8 +52,10 @@ export async function verifySession(token) {
 /**
  * Sign out the current user from the backend.
  * @param {string} token
+ * @param {string} app  'crik' | 'association'
  */
-export async function signOut(token) {
+export async function signOut(token, app = 'crik') {
+    const API_BASE_URL = getBaseUrl(app);
     try {
         const headers = { 'Content-Type': 'application/json' };
         await fetch(`${API_BASE_URL}/api/auth/google/logout`, {
@@ -55,26 +67,38 @@ export async function signOut(token) {
         console.warn('[authService] signOut error (ignored):', err);
     }
 }
-export const createDashboardOrder = async (token, { userId, amount, tokenCount }) => {
-  const response = await fetch(`${API_BASE_URL}/api/payments/dashboard-order`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    //   Authorization: `Bearer ${token}`,
-    },
-     credentials: 'include',
-    body: JSON.stringify({ userId, amount, tokenCount }),
-  });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `Request failed with status ${response.status}`);
-  }
+/**
+ * Create a dashboard order to assign tokens to a user.
+ * @param {string} token
+ * @param {{ userId, amount, tokenCount }} payload
+ * @param {string} app  'crik' | 'association'
+ */
+export const createDashboardOrder = async (token, { userId, amount, tokenCount }, app = 'crik') => {
+    const API_BASE_URL = getBaseUrl(app);
+    const response = await fetch(`${API_BASE_URL}/api/payments/dashboard-order`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: 'include',
+        body: JSON.stringify({ userId, amount, tokenCount }),
+    });
 
-  return response.json();
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Request failed with status ${response.status}`);
+    }
+
+    return response.json();
 };
 
-export async function getBroadcasters() {
+/**
+ * Fetch all broadcasters from the backend.
+ * @param {string} app  'crik' | 'association'
+ */
+export async function getBroadcasters(app = 'crik') {
+    const API_BASE_URL = getBaseUrl(app);
     try {
         const headers = { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' };
         const response = await fetch(`${API_BASE_URL}/api/users/broadcasters`, {
@@ -99,10 +123,12 @@ export async function getBroadcasters() {
  * Initiates Google OAuth sign-in by opening a popup window.
  * Polls for popup closure and then checks if auth succeeded via cookies.
  *
- * @param {string} role  One of: 'BROADCASTER', 'GROUND', 'ASSOCIATIONS'
+ * @param {string} role  One of: 'BROADCASTER', 'GROUND', 'ASSOCIATIONS', 'ADMIN'
+ * @param {string} app   'crik' | 'association'
  * @returns {Promise<{success: boolean, user?: object, sessionToken?: string, error?: string}>}
  */
-export function googleSignIn(role) {
+export function googleSignIn(role, app = 'crik') {
+    const API_BASE_URL = getBaseUrl(app);
     return new Promise((resolve) => {
         const authURL = `${API_BASE_URL}/api/auth/google?role=${encodeURIComponent(role)}&prompt=select_account`;
         console.log(`[authService] Opening Google OAuth popup: ${authURL}`);
@@ -136,7 +162,7 @@ export function googleSignIn(role) {
             if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
                 cleanup();
                 const token = event.data.sessionToken || event.data.token || 'cookie-session';
-                const userResult = await fetchUserProfile(token);
+                const userResult = await fetchUserProfile(token, app);
                 if (userResult) {
                     resolve({ success: true, sessionToken: token, user: userResult });
                 } else {
@@ -158,12 +184,12 @@ export function googleSignIn(role) {
                     const popupUrl = popup.location.href; // This will throw if cross-origin
                     const urlParams = new URLSearchParams(popup.location.search);
                     const tokenFromUrl = urlParams.get('sessionToken') || urlParams.get('token');
-                    
+
                     if (tokenFromUrl) {
                         console.log('🔍 [authService] Token successfully extracted from popup URL:', tokenFromUrl.substring(0, 15) + '...');
                         cleanup();
                         if (!popup.closed) popup.close();
-                        const userResult = await fetchUserProfile(tokenFromUrl);
+                        const userResult = await fetchUserProfile(tokenFromUrl, app);
                         resolve({ success: true, sessionToken: tokenFromUrl, user: userResult });
                         return;
                     } else if (popupUrl.includes('localhost')) {
@@ -177,11 +203,10 @@ export function googleSignIn(role) {
                     }
                 }
 
-                // Instead of checking popup.closed (which can be unreliable with some COOP/COEP headers),
-                // we continuously poll the backend to see if the session cookie was set.
+                // Poll the backend to see if the session cookie was set
                 console.log('🔄 [authService] Polling /api/users/me using browser cookies to check if login succeeded...');
-                const userResult = await fetchUserProfile('cookie-session');
-                
+                const userResult = await fetchUserProfile('cookie-session', app);
+
                 if (userResult) {
                     console.log('✅ [authService] Session established successfully via cookies! User:', userResult.email);
                     cleanup();
@@ -226,13 +251,16 @@ export function googleSignIn(role) {
 /**
  * Fetch user profile from the backend.
  * @param {string} token
+ * @param {string} app  'crik' | 'association'
  * @returns {Promise<object|null>}
  */
-async function fetchUserProfile(token) {
+async function fetchUserProfile(token, app = 'crik') {
+    const API_BASE_URL = getBaseUrl(app);
     try {
-        const headers = { 'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-         };
+        const headers = {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+        };
         const response = await fetch(`${API_BASE_URL}/api/users/me`, {
             method: 'GET',
             headers,

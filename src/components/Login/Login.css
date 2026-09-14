@@ -181,3 +181,45 @@
 @keyframes btnSpin {
   to { transform: rotate(360deg); }
 }
+
+/* ── App selector toggle ─────────────────────────────── */
+.app-selector {
+  display: flex;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.app-selector-btn {
+  flex: 1;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.app-selector-btn.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.app-selector-btn:not(.active):not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.app-selector-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

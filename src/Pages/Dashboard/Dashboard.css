@@ -47,6 +47,28 @@
   transform: translateY(-1px);
 }
 
+/* Wrapper for the badge + logout button */
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* App indicator badge */
+.dashboard-app-badge {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+
 .dashboard-content {
   display: grid;
   grid-template-columns: 1.3fr 0.9fr;

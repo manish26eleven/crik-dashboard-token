@@ -10,6 +10,8 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.sessionToken);
+  const selectedApp = useSelector((state) => state.auth.selectedApp ?? 'crik');
+
 
   const [tokenCount, setTokenCount] = useState("");
   const [price, setPrice] = useState("");
@@ -27,7 +29,7 @@ export default function Dashboard() {
   const isSubmittingRef = useRef(false);
 
   const handleLogout = async () => {
-    await signOut(token);
+    await signOut(token, selectedApp);
     localStorage.removeItem("session-token");
     localStorage.removeItem("userData");
     dispatch(logout());
@@ -37,14 +39,14 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchBroadcasters = async () => {
       try {
-        const data = await getBroadcasters();
+        const data = await getBroadcasters(selectedApp);
         setBroadcasters(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch broadcasters:", err);
       }
     };
     fetchBroadcasters();
-  }, []);
+  }, [selectedApp]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -106,7 +108,7 @@ export default function Dashboard() {
     setSubmitting(true);
 
     try {
-      const result = await createDashboardOrder(token, payload);
+      const result = await createDashboardOrder(token, payload, selectedApp);
       console.log("Order created:", result);
 
       setSuccessInfo({
@@ -137,9 +139,14 @@ export default function Dashboard() {
             Use the form below to manage token pricing in a clean single-page layout.
           </p>
         </div>
-        <button className="dashboard-logout" onClick={handleLogout}>
-          Log out
-        </button>
+        <div className="dashboard-header-actions">
+          <span className="dashboard-app-badge">
+            {selectedApp === 'association' ? 'Association' : 'Crik'}
+          </span>
+          <button className="dashboard-logout" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
       </header>
 
       <main className="dashboard-content">
