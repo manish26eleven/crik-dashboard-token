@@ -10,8 +10,10 @@
  */
 
 const API_URLS = {
-    crik:        'https://test-stage.crik.ai',
-    association: 'https://stage-api.crik.ai',
+    // crik:        'https://test-stage.crik.ai',
+    // association: 'https://stage-api.crik.ai',
+    crik: 'https://main-api.crik.ai',
+    association: 'htttps://main-api.crik.ai
 };
 
 function getBaseUrl(app = 'crik') {
